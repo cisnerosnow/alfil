@@ -1,4 +1,4 @@
-"""puppy - recortador de video simple.
+"""alfil - recortador de video simple.
 
 Abre un video, previsualizalo, marca inicio/fin y exporta el pedazo.
 """
@@ -9,6 +9,7 @@ import subprocess
 import sys
 
 from PySide6.QtCore import Qt, QThread, QUrl, Signal
+from PySide6.QtGui import QIcon
 from PySide6.QtMultimedia import QAudioOutput, QMediaPlayer
 from PySide6.QtMultimediaWidgets import QVideoWidget
 from PySide6.QtWidgets import (
@@ -24,6 +25,8 @@ from PySide6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
+
+LOGO = os.path.join(os.path.dirname(os.path.abspath(__file__)), "logo-alfil.png")
 
 VIDEO_FILTER = "Videos (*.mp4 *.mkv *.mov *.avi *.webm *.m4v *.flv *.wmv);;Todos (*.*)"
 
@@ -79,10 +82,11 @@ class ExportJob(QThread):
             self.done.emit(False, (p.stderr or "").strip()[-1500:])
 
 
-class Puppy(QWidget):
+class Alfil(QWidget):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("puppy")
+        self.setWindowTitle("alfil")
+        self.setWindowIcon(QIcon(LOGO))
         self.resize(900, 620)
 
         self.path = None
@@ -219,7 +223,7 @@ class Puppy(QWidget):
         if not self.path:
             return
         if self.end_ms - self.start_ms < 100:
-            QMessageBox.warning(self, "puppy", "El rango es demasiado corto. Marca inicio y fin.")
+            QMessageBox.warning(self, "alfil", "El rango es demasiado corto. Marca inicio y fin.")
             return
         base, ext = os.path.splitext(os.path.basename(self.path))
         suggested = os.path.join(os.path.dirname(self.path), f"{base}_recorte{ext}")
@@ -227,7 +231,7 @@ class Puppy(QWidget):
         if not dst:
             return
         if os.path.abspath(dst) == os.path.abspath(self.path):
-            QMessageBox.warning(self, "puppy", "Elegi un archivo distinto al original.")
+            QMessageBox.warning(self, "alfil", "Elegi un archivo distinto al original.")
             return
 
         self.export_btn.setEnabled(False)
@@ -245,7 +249,7 @@ class Puppy(QWidget):
             self.status.setText(f"Listo: {msg}")
         else:
             self.status.setText("Fallo la exportacion.")
-            QMessageBox.critical(self, "puppy", msg or "ffmpeg fallo.")
+            QMessageBox.critical(self, "alfil", msg or "ffmpeg fallo.")
 
     def on_duration(self, ms):
         self.duration = ms
@@ -292,8 +296,13 @@ class Puppy(QWidget):
 
 
 def main():
+    if os.name == "nt":
+        # Sin esto Windows agrupa la ventana bajo el icono de python.exe.
+        import ctypes
+        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("alfil.editor")
     app = QApplication(sys.argv)
-    w = Puppy()
+    app.setWindowIcon(QIcon(LOGO))
+    w = Alfil()
     w.show()
     sys.exit(app.exec())
 
